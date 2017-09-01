@@ -17,7 +17,7 @@ func main() {
 	if len(args) < 2 {
 		log("unknown",ResultStatus{
 			Status: util.Failure,
-			Message: fmt.Scanf("Wrong args number: %d",len(args)-1),
+			Message: fmt.Sprintf("Wrong args number: %d",len(args)-1),
 		})
 		os.Exit(-1)
 	}
@@ -31,7 +31,7 @@ func main() {
 		if len(args) < 4 {
 			log("mount",ResultStatus{
 				Status: util.Failure,
-				Message: fmt.Scanf("Wrong args number: %d",len(args)-1),
+				Message: fmt.Sprintf("Wrong args number: %d",len(args)-1),
 			})
 			os.Exit(-1)
 		}
@@ -45,7 +45,7 @@ func main() {
 		if len(args) < 4 {
 			log("unmount",ResultStatus{
 				Status: util.Failure,
-				Message: fmt.Scanf("Wrong args number: %d",len(args)-1),
+				Message: fmt.Sprintf("Wrong args number: %d",len(args)-1),
 			})
 			os.Exit(-1)
 		}
