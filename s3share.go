@@ -25,23 +25,25 @@ func main() {
 	}
 	switch args[1] {
 	case "mount":
-		if len(args) < 3 {
+		if len(args) < 4 {
 			usage()
 			os.Exit(-1)
 		}
 		mount(args[2], args[3])
 	case "init":
+		slog.Info("Init request")
 		log(ResultStatus{
 			Status:       util.Success,
 			Capabilities: map[string]interface{}{"attach": false},
 		})
 	case "unmount":
-		if len(args) < 3 {
+		if len(args) < 4 {
 			usage()
 			os.Exit(-1)
 		}
 		unmount(args[2], args[3])
 	default:
+		slog.Warning("Unsupported operation: "+args[1])
 		log(ResultStatus{
 			Status: util.NotSupported,
 		})
