@@ -22,7 +22,7 @@ func (m *HostFSMount) Mount(path string) error {
 	}
 	//mount --bind /root/kuberlab-up /root/test-mount
 	mpath := m.Conf["path"].(string)
-	cmd := exec.Command("mount", "--bind", path, mpath)
+	cmd := exec.Command("mount", "--bind",mpath,path)
 	return cmd.Run()
 }
 
