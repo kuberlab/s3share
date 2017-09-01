@@ -8,6 +8,7 @@ import (
 	"log/syslog"
 	"os"
 	"strings"
+	"syscall"
 )
 
 var slog *syslog.Writer
@@ -42,14 +43,14 @@ func main() {
 			Capabilities: map[string]interface{}{"attach": false},
 		})
 	case "unmount":
-		if len(args) < 4 {
+		if len(args) < 3 {
 			log("unmount",ResultStatus{
 				Status: util.Failure,
 				Message: fmt.Sprintf("Wrong args number: %d",len(args)-1),
 			})
 			os.Exit(-1)
 		}
-		unmount(args[2], args[3])
+		unmount(args[2])
 	default:
 		log(args[1],ResultStatus{
 			Status: util.NotSupported,
@@ -80,10 +81,9 @@ func mount(path string, conf string) {
 		Status: util.Success,
 	})
 }
-func unmount(path string, conf string) {
-	slog.Info(fmt.Sprintf("Unmount request '%s' data '%s'", path, conf))
-	s := getShare("unmount",conf)
-	err := s.UnMount(path)
+func unmount(path string) {
+	slog.Info(fmt.Sprintf("Unmount request '%s' data '%s'", path))
+	err := syscall.Unmount(path, 0)
 	if err != nil {
 		log("unmount",ResultStatus{
 			Status:  util.Failure,
