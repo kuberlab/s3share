@@ -18,7 +18,7 @@ spec:
   - name: test
     flexVolume:
       driver: "kuberlab/share"
-      fsType: "share"
+      fsType: "ext3"
       options:
         kuberlabFS: "host"
         path: "/fast-data"

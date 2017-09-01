@@ -22,7 +22,8 @@ func (m *HostFSMount) Mount(path string) error {
 	}
 	//mount --bind /root/kuberlab-up /root/test-mount
 	mpath := m.Conf["path"].(string)
-	cmd := exec.Command("mount", "--bind",mpath,path)
+	fsType := m.Conf["kubernetes.io/fsType"].(string)
+	cmd := exec.Command("mount", "-t",fsType,"--bind",mpath,path)
 	return cmd.Run()
 }
 
