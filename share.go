@@ -43,7 +43,7 @@ func main() {
 		}
 		unmount(args[2], args[3])
 	default:
-		slog.Warning("Unsupported operation: "+args[1])
+		slog.Warning("Unsupported operation: " + args[1])
 		log(ResultStatus{
 			Status: util.NotSupported,
 		})
@@ -121,5 +121,8 @@ func getConf(s string) (map[string]interface{}, error) {
 	dec := json.NewDecoder(strings.NewReader(s))
 	var c map[string]interface{}
 	err := dec.Decode(&c)
-	return c, fmt.Errorf("Decode share param failed: %v", err)
+	if err != nil {
+		return nil, fmt.Errorf("Decode share param failed: %v", err)
+	}
+	return c, nil
 }

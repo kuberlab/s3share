@@ -12,6 +12,8 @@ spec:
       mountPath: /data
     ports:
     - containerPort: 80
+  nodeSelector:
+    share-test: "all"
   volumes:
   - name: test
     flexVolume:

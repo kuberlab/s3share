@@ -11,9 +11,8 @@ type HostFSMount struct {
 }
 
 func NewHostFSMount(conf map[string]interface{}) *HostFSMount {
-	return &HostFSMount{Conf:conf}
+	return &HostFSMount{Conf: conf}
 }
-
 
 func (m *HostFSMount) Mount(path string) error {
 	if isMounted, err := util.IsMounted(path); err != nil {
