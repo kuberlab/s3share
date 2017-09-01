@@ -15,44 +15,49 @@ var slog *syslog.Writer
 func main() {
 	args := os.Args
 	if len(args) < 2 {
-		usage()
+		log("unknown",ResultStatus{
+			Status: util.Failure,
+			Message: fmt.Scanf("Wrong args number: %d",len(args)-1),
+		})
 		os.Exit(-1)
 	}
 	var err error
-	slog, err = syslog.New(syslog.LOG_WARNING|syslog.LOG_DAEMON, "s3share")
+	slog, err = syslog.New(syslog.LOG_WARNING|syslog.LOG_DAEMON, "kuberlab-share")
 	if err != nil {
 		panic(err)
 	}
 	switch args[1] {
 	case "mount":
 		if len(args) < 4 {
-			usage()
+			log("mount",ResultStatus{
+				Status: util.Failure,
+				Message: fmt.Scanf("Wrong args number: %d",len(args)-1),
+			})
 			os.Exit(-1)
 		}
 		mount(args[2], args[3])
 	case "init":
-		slog.Info("Init request")
-		log(ResultStatus{
+		log("init",ResultStatus{
 			Status:       util.Success,
 			Capabilities: map[string]interface{}{"attach": false},
 		})
 	case "unmount":
 		if len(args) < 4 {
-			usage()
+			log("unmount",ResultStatus{
+				Status: util.Failure,
+				Message: fmt.Scanf("Wrong args number: %d",len(args)-1),
+			})
 			os.Exit(-1)
 		}
 		unmount(args[2], args[3])
 	default:
-		slog.Warning("Unsupported operation: " + args[1])
-		log(ResultStatus{
+		log(args[1],ResultStatus{
 			Status: util.NotSupported,
 		})
 	}
 
 }
-func usage() {
-	fmt.Println("s3chare command args")
-}
+
 
 type ResultStatus struct {
 	Status       string                 `json:"status"`
@@ -62,39 +67,39 @@ type ResultStatus struct {
 
 func mount(path string, conf string) {
 	slog.Info(fmt.Sprintf("Mount request '%s' data '%s'", path, conf))
-	s := getShare(conf)
+	s := getShare("mount",conf)
 	err := s.Mount(path)
 	if err != nil {
-		log(ResultStatus{
+		log("mount",ResultStatus{
 			Status:  util.Failure,
 			Message: err.Error(),
 		})
 		os.Exit(1)
 	}
-	log(ResultStatus{
+	log("mount",ResultStatus{
 		Status: util.Success,
 	})
 }
 func unmount(path string, conf string) {
 	slog.Info(fmt.Sprintf("Unmount request '%s' data '%s'", path, conf))
-	s := getShare(conf)
+	s := getShare("unmount",conf)
 	err := s.UnMount(path)
 	if err != nil {
-		log(ResultStatus{
+		log("unmount",ResultStatus{
 			Status:  util.Failure,
 			Message: err.Error(),
 		})
 		os.Exit(1)
 	}
-	log(ResultStatus{
+	log("unmount",ResultStatus{
 		Status: util.Success,
 	})
 }
 
-func getShare(conf string) share.Share {
+func getShare(command string,conf string) share.Share {
 	c, err := getConf(conf)
 	if err != nil {
-		log(ResultStatus{
+		log(command,ResultStatus{
 			Status:  util.Failure,
 			Message: err.Error(),
 		})
@@ -102,7 +107,7 @@ func getShare(conf string) share.Share {
 	}
 	s, err := share.NewShare(c)
 	if err != nil {
-		log(ResultStatus{
+		log(command,ResultStatus{
 			Status:  util.Failure,
 			Message: err.Error(),
 		})
@@ -112,7 +117,11 @@ func getShare(conf string) share.Share {
 
 }
 
-func log(v interface{}) {
+func log(command string,res ResultStatus) {
+	slog.Info(fmt.Sprintf("Command '%s' result '%s' message: %s", command,res.Status,res.Message))
+	log0(res)
+}
+func log0(v interface{}) {
 	enc := json.NewEncoder(os.Stdout)
 	enc.Encode(v)
 }
