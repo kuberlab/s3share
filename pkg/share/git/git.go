@@ -64,7 +64,7 @@ func (m *GitFSMount) UnMount(path string) error {
 	if err != nil {
 		return err
 	}
-	_, p2, err := util.ParseFindMntOut(out)
+	_, p2, err := util.ParseFindMntOut(string(out))
 	if err != nil {
 		m.slog.Warning(fmt.Sprintf("Can't dinf mount source in %s", out))
 	} else {

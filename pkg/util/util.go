@@ -1,7 +1,6 @@
 package util
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -44,20 +43,20 @@ func ParseFindMntOut(out string) (string, string, error) {
 	//root/test1 /dev/mapper/ASRock--vg-home[/tmp/test2] ext4   rw,relatime,errors=remount-ro,data=ordered
 	p1 := strings.Split(out, "/n")
 	if len(p1) < 1 {
-		return "", "", fmt.Sprintf("Mount not found in '%v'", out)
+		return "", "", fmt.Errorf("Mount not found in '%v'", out)
 	} else {
 		p1 := strings.Split(p1[0], " ")
 		if len(p1) < 2 {
-			return "", "", fmt.Sprintf("Mount not found in '%v'", out)
+			return "", "", fmt.Errorf("Mount not found in '%v'", out)
 		}
 		i1 := strings.Index(p1[1], "[")
 		if i1 < 0 {
-			return "", "", fmt.Sprintf("Mount not found in '%v'", out)
+			return "", "", fmt.Errorf("Mount not found in '%v'", out)
 		}
 		i2 := strings.Index(p1[1], "]")
 		if i2 < 0 {
-			return "", "", fmt.Sprintf("Mount not found in '%v'", out)
+			return "", "", fmt.Errorf("Mount not found in '%v'", out)
 		}
-		return p1[0], (p1[0])[i1:i2]
+		return p1[0], (p1[0])[i1:i2],nil
 	}
 }
