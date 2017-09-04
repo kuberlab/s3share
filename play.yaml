@@ -19,6 +19,9 @@ spec:
     flexVolume:
       driver: "kuberlab/share"
       fsType: "share"
+      secretRef:
+        name: test-aws
       options:
-        kuberlabFS: "git"
+        bucket: "test-k-aws"
+        kuberlabFS: "s3"
         url: "https://github.com/dreyk/s3share"

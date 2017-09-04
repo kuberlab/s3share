@@ -42,7 +42,7 @@ func (m *S3FSMount) Mount(path string) error {
 		bucket,
 		"/mnt/mountpoint",
 		"-o",
-		"passwd_file=/etc/s3secret/passwd-s3fs",
+		"passwd_file=/etc/passwd-s3fs",
 	}
 	if v, ok := m.conf["kubernetes.io/secret/aws_access_key_id"]; ok {
 		id, err := base64.StdEncoding.DecodeString(v.(string))
