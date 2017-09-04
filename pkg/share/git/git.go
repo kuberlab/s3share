@@ -29,7 +29,7 @@ func (m *GitFSMount) Mount(path string) error {
 	url := m.conf["url"].(string)
 	rootMnt := filepath.Join(os.TempDir(), uuid.New())
 	m.slog.Info(fmt.Sprintf("Clone %s to %s", url, rootMnt))
-	err := os.MkdirAll(path, os.ModePerm)
+	err := os.MkdirAll(rootMnt, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("Failed create tmp dir for clonning repo: %v", err)
 	}
