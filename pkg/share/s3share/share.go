@@ -38,7 +38,7 @@ func (m *S3FSMount) Mount(path string) error {
 		"SYS_ADMIN",
 	}
 	args2 := []string{
-		"s3fs",
+		"kuberlab/s3fs",
 		bucket,
 		"/mnt/mountpoint",
 		"-o",
