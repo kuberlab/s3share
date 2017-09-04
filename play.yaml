@@ -18,7 +18,7 @@ spec:
   - name: test
     flexVolume:
       driver: "kuberlab/share"
-      fsType: "ext3"
+      fsType: "share"
       options:
-        kuberlabFS: "host"
-        path: "/fast-data"
+        kuberlabFS: "git"
+        url: "https://github.com/dreyk/s3share"

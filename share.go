@@ -16,9 +16,9 @@ var slog *syslog.Writer
 func main() {
 	args := os.Args
 	if len(args) < 2 {
-		log("unknown",ResultStatus{
-			Status: util.Failure,
-			Message: fmt.Sprintf("Wrong args number: %d",len(args)-1),
+		log("unknown", ResultStatus{
+			Status:  util.Failure,
+			Message: fmt.Sprintf("Wrong args number: %d", len(args)-1),
 		})
 		os.Exit(-1)
 	}
@@ -30,35 +30,34 @@ func main() {
 	switch args[1] {
 	case "mount":
 		if len(args) < 4 {
-			log("mount",ResultStatus{
-				Status: util.Failure,
-				Message: fmt.Sprintf("Wrong args number: %d",len(args)-1),
+			log("mount", ResultStatus{
+				Status:  util.Failure,
+				Message: fmt.Sprintf("Wrong args number: %d", len(args)-1),
 			})
 			os.Exit(-1)
 		}
 		mount(args[2], args[3])
 	case "init":
-		log("init",ResultStatus{
+		log("init", ResultStatus{
 			Status:       util.Success,
 			Capabilities: map[string]interface{}{"attach": false},
 		})
 	case "unmount":
 		if len(args) < 3 {
-			log("unmount",ResultStatus{
-				Status: util.Failure,
-				Message: fmt.Sprintf("Wrong args number: %d",len(args)-1),
+			log("unmount", ResultStatus{
+				Status:  util.Failure,
+				Message: fmt.Sprintf("Wrong args number: %d", len(args)-1),
 			})
 			os.Exit(-1)
 		}
 		unmount(args[2])
 	default:
-		log(args[1],ResultStatus{
+		log(args[1], ResultStatus{
 			Status: util.NotSupported,
 		})
 	}
 
 }
-
 
 type ResultStatus struct {
 	Status       string                 `json:"status"`
@@ -68,16 +67,16 @@ type ResultStatus struct {
 
 func mount(path string, conf string) {
 	slog.Info(fmt.Sprintf("Mount request '%s' data '%s'", path, conf))
-	s := getShare("mount",conf)
+	s := getShare("mount", conf)
 	err := s.Mount(path)
 	if err != nil {
-		log("mount",ResultStatus{
+		log("mount", ResultStatus{
 			Status:  util.Failure,
 			Message: err.Error(),
 		})
 		os.Exit(1)
 	}
-	log("mount",ResultStatus{
+	log("mount", ResultStatus{
 		Status: util.Success,
 	})
 }
@@ -85,29 +84,29 @@ func unmount(path string) {
 	slog.Info(fmt.Sprintf("Unmount request '%s' data '%s'", path))
 	err := syscall.Unmount(path, 0)
 	if err != nil {
-		log("unmount",ResultStatus{
+		log("unmount", ResultStatus{
 			Status:  util.Failure,
 			Message: err.Error(),
 		})
 		os.Exit(1)
 	}
-	log("unmount",ResultStatus{
+	log("unmount", ResultStatus{
 		Status: util.Success,
 	})
 }
 
-func getShare(command string,conf string) share.Share {
+func getShare(command string, conf string) share.Share {
 	c, err := getConf(conf)
 	if err != nil {
-		log(command,ResultStatus{
+		log(command, ResultStatus{
 			Status:  util.Failure,
 			Message: err.Error(),
 		})
 		os.Exit(1)
 	}
-	s, err := share.NewShare(c)
+	s, err := share.NewShare(slog, c)
 	if err != nil {
-		log(command,ResultStatus{
+		log(command, ResultStatus{
 			Status:  util.Failure,
 			Message: err.Error(),
 		})
@@ -117,8 +116,8 @@ func getShare(command string,conf string) share.Share {
 
 }
 
-func log(command string,res ResultStatus) {
-	slog.Info(fmt.Sprintf("Command '%s' result '%s' message: %s", command,res.Status,res.Message))
+func log(command string, res ResultStatus) {
+	slog.Info(fmt.Sprintf("Command '%s' result '%s' message: %s", command, res.Status, res.Message))
 	log0(res)
 }
 func log0(v interface{}) {
