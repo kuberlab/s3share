@@ -3,6 +3,7 @@ package share
 import (
 	"fmt"
 	"github.com/dreyk/s3share/pkg/share/git"
+	"github.com/dreyk/s3share/pkg/share/s3share"
 	"log/syslog"
 )
 
@@ -20,6 +21,8 @@ func NewShare(slog *syslog.Writer, c map[string]interface{}) (Share, error) {
 				switch s {
 				case "git":
 					return git.NewGitFSMount(slog, c), nil
+				case "s3":
+					return s3share.NewS3FSMount(slog, c), nil
 				default:
 					return nil, fmt.Errorf("FS type '%s' is not supported", s)
 				}
