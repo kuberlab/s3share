@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/dreyk/s3share/pkg/util"
 	"log/syslog"
+	"strings"
 	"syscall"
 )
 
@@ -18,10 +19,33 @@ func NewS3FSMount(slog *syslog.Writer, conf map[string]interface{}) *S3FSMount {
 }
 
 func (m *S3FSMount) Mount(path string) error {
-	if isMounted, err := util.IsMounted(path); err != nil {
-		return err
-	} else if isMounted {
+	cid, err := m.mountDaemon(path)
+	if err != nil {
 		return nil
+	}
+	if cid != "" {
+		if isMounted, err := util.IsMounted(path); err != nil {
+			return err
+		} else if isMounted {
+			return nil
+		} else {
+			m.slog.Warning(fmt.Sprintf("Mount point '%s' doesn't exist but container '%s' is running", path, cid))
+			if err := m.stopDaemon(path, cid); err != nil {
+				return err
+			}
+
+		}
+	} else {
+		if isMounted, err := util.IsMounted(path); err != nil {
+			return err
+		} else if isMounted {
+			m.slog.Warning(fmt.Sprintf("Mount point '%s' exists but container is not running", path))
+			err := syscall.Unmount(path, 0)
+			if err != nil {
+				m.slog.Warning(fmt.Sprintf("Failed unmount stailed mount '%s': %v", path, err))
+				return err
+			}
+		}
 	}
 	bucket := m.conf["bucket"].(string)
 	args1 := []string{
@@ -41,15 +65,18 @@ func (m *S3FSMount) Mount(path string) error {
 		"/mnt/mountpoint",
 		"-o",
 		"passwd_file=/etc/passwd-s3fs",
+		"-o",
+		"multireq_max=5",
+		"-f",
 	}
 	if _, ok := m.conf["kubernetes.io/secret/aws_access_key_id"]; ok {
 		id, err := util.GetSecretString(m.conf, "aws_access_key_id")
 		if err != nil {
-			return fmt.Errorf("Failed decode aws key id: %v", err)
+			return err
 		}
 		secret, err := util.GetSecretString(m.conf, "aws_access_key")
 		if err != nil {
-			return fmt.Errorf("Failed decode aws key: %v", err)
+			return err
 		}
 		args1 = append(args1,
 			"-e",
@@ -70,6 +97,43 @@ func (m *S3FSMount) Mount(path string) error {
 }
 
 func (m *S3FSMount) UnMount(path string) error {
+	cid, err := m.mountDaemon(path)
+	if err != nil {
+		return err
+	}
+	if cid != "" {
+		if err := m.stopDaemon(path, cid); err != nil {
+			return err
+		}
+	}
+	if isMounted, err := util.IsMounted(path); err != nil {
+		return err
+	} else if !isMounted {
+		return nil
+	}
+	return syscall.Unmount(path, 0)
+}
+
+func (m *S3FSMount) stopDaemon(path string, id string) error {
+	m.slog.Info("Stoping container " + id)
+	out, err := util.ExecCommand(m.exec, "docker", []string{"stop",
+		id,
+	}, "")
+	if err != nil {
+		m.slog.Warning(fmt.Sprintf("Failed stop docker container: %v, %v %v", id, out, err))
+		return fmt.Errorf("Failed stop docker container: %v,%v %v", id, out, err)
+	}
+	m.slog.Info("Terminating container " + id)
+	out, err = util.ExecCommand(m.exec, "docker", []string{"rm",
+		id,
+	}, "")
+	if err != nil {
+		m.slog.Warning(fmt.Sprintf("Failed remove docker container: %v, %v %v", id, out, err))
+		return fmt.Errorf("Failed remove docker container: %v, %v %v", id, out, err)
+	}
+	return nil
+}
+func (m *S3FSMount) mountDaemon(path string) (string, error) {
 	out, err := util.ExecCommand(m.exec, "docker", []string{"ps",
 		"--filter",
 		"label=flex.mount.path=" + path,
@@ -78,20 +142,11 @@ func (m *S3FSMount) UnMount(path string) error {
 	}, "")
 	if err != nil {
 		m.slog.Warning(fmt.Sprintf("Failed list docker containers: %v, %v", string(out), err))
-		return fmt.Errorf("Failed list docker containers: %v, %v", string(out), err)
+		return "", fmt.Errorf("Failed list docker containers: %v, %v", string(out), err)
 	}
 	if len(out) > 0 {
-		m.slog.Info("Terminating container " + string(out))
-		out, err := util.ExecCommand(m.exec, "docker", []string{"rm",
-			string(out),
-		}, "")
-		m.slog.Warning(fmt.Sprintf("Failed remove docker container: %v, %v", string(out), err))
-		return fmt.Errorf("Failed remove docker container: %v, %v", string(out), err)
+		return strings.Trim(string(out), "\n"), nil
+	} else {
+		return "", nil
 	}
-	if isMounted, err := util.IsMounted(path); err != nil {
-		return err
-	} else if !isMounted {
-		return nil
-	}
-	return syscall.Unmount(path, 0)
 }
