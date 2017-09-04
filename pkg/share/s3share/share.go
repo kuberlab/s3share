@@ -62,6 +62,8 @@ func (m *S3FSMount) Mount(path string) error {
 	out, err := util.ExecCommand(m.exec, "docker", append(args1, args2...), "")
 	if err != nil {
 		return fmt.Errorf("Failed mount s3fs out='%v' error='%v'", string(out), err)
+	} else {
+		m.slog.Info(fmt.Sprintf("Start conntainer result %s", string(out)))
 	}
 
 	return nil
