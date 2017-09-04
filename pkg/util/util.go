@@ -1,6 +1,7 @@
 package util
 
 import (
+	"encoding/base64"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -57,6 +58,23 @@ func ParseFindMntOut(out string) (string, string, error) {
 		if i2 < 0 {
 			return "", "", fmt.Errorf("Mount not found in '%v'", out)
 		}
-		return p1[0], (p1[0])[i1:i2],nil
+		return p1[0], (p1[0])[i1:i2], nil
 	}
+}
+
+func GetSecretString(conf map[string]interface{}, name string) (string, error) {
+	if v, ok := conf["kubernetes.io/secret/"+name]; !ok {
+		return "", fmt.Errorf("Secret '%s' not found", name)
+	} else {
+		if s, ok := v.(string); ok {
+			sb, err := base64.StdEncoding.DecodeString(s)
+			if err != nil {
+				return "", fmt.Errorf("Failed decode secret '%s'", name)
+			}
+			return strings.Trim(strings.Trim(string(sb), "\n"), "\r"), nil
+		} else {
+			return "", fmt.Errorf("Bad secret '%s' value", name)
+		}
+	}
+
 }

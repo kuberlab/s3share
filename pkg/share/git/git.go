@@ -23,7 +23,7 @@ func (m *GitFSMount) Mount(path string) error {
 	} else if isMounted {
 		return nil
 	}
-	out, err := util.ExecCommand(m.exec, "mount", []string{"-t","tmpfs","tmpfs", path}, "")
+	out, err := util.ExecCommand(m.exec, "mount", []string{"-t", "tmpfs", "tmpfs", path}, "")
 	if err != nil {
 		return fmt.Errorf("Failed mount tmpfs out='%v' error='%v'", string(out), err)
 	}

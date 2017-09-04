@@ -1,8 +1,6 @@
 package s3share
 
 import (
-	"encoding/base64"
-	"errors"
 	"fmt"
 	"github.com/dreyk/s3share/pkg/util"
 	"log/syslog"
@@ -44,20 +42,20 @@ func (m *S3FSMount) Mount(path string) error {
 		"-o",
 		"passwd_file=/etc/passwd-s3fs",
 	}
-	if v, ok := m.conf["kubernetes.io/secret/aws_access_key_id"]; ok {
-		id, err := base64.StdEncoding.DecodeString(v.(string))
+	if _, ok := m.conf["kubernetes.io/secret/aws_access_key_id"]; ok {
+		id, err := util.GetSecretString(m.conf, "aws_access_key_id")
 		if err != nil {
-			return errors.New("Failed decode aws key id")
+			return fmt.Errorf("Failed decode aws key id: %v", err)
 		}
-		secret, err := base64.StdEncoding.DecodeString(m.conf["kubernetes.io/secret/aws_access_key"].(string))
+		secret, err := util.GetSecretString(m.conf, "aws_access_key")
 		if err != nil {
-			return errors.New("Failed decode aws key")
+			return fmt.Errorf("Failed decode aws key: %v", err)
 		}
 		args1 = append(args1,
 			"-e",
-			fmt.Sprintf("S3User=%s", string(id)),
+			fmt.Sprintf("S3User=%s", id),
 			"-e",
-			fmt.Sprintf("S3Secret=%s", string(secret)),
+			fmt.Sprintf("S3Secret=%s", secret),
 		)
 	}
 
