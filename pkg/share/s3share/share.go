@@ -64,8 +64,6 @@ func (m *S3FSMount) Mount(path string) error {
 		bucket,
 		"/mnt/mountpoint",
 		"-o",
-		"passwd_file=/etc/passwd-s3fs",
-		"-o",
 		"multireq_max=5",
 		"-f",
 	}
@@ -79,6 +77,8 @@ func (m *S3FSMount) Mount(path string) error {
 			return err
 		}
 		args1 = append(args1,
+			"-o",
+			"passwd_file=/etc/passwd-s3fs",
 			"-e",
 			fmt.Sprintf("S3User=%s", id),
 			"-e",
