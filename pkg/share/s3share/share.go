@@ -76,9 +76,11 @@ func (m *S3FSMount) Mount(path string) error {
 		if err != nil {
 			return err
 		}
-		args1 = append(args1,
+		args2 = append(args1,
 			"-o",
 			"passwd_file=/etc/passwd-s3fs",
+		)
+		args1 = append(args1,
 			"-e",
 			fmt.Sprintf("S3User=%s", id),
 			"-e",
