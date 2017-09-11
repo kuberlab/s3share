@@ -2,6 +2,10 @@ package s3share
 
 import (
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/dreyk/s3share/pkg/util"
 	"log/syslog"
 	"strings"
@@ -64,9 +68,12 @@ func (m *S3FSMount) Mount(path string) error {
 		bucket,
 		"/mnt/mountpoint",
 		"-o",
+		"passwd_file=/etc/passwd-s3fs",
+		"-o",
 		"multireq_max=5",
 		"-f",
 	}
+	//var awsSession *session.Session
 	if _, ok := m.conf["kubernetes.io/secret/aws_access_key_id"]; ok {
 		id, err := util.GetSecretString(m.conf, "aws_access_key_id")
 		if err != nil {
@@ -76,18 +83,32 @@ func (m *S3FSMount) Mount(path string) error {
 		if err != nil {
 			return err
 		}
-		args2 = append(args2,
-			"-o",
-			"passwd_file=/etc/passwd-s3fs",
-		)
+		/*awsSession = session.New(&aws.Config{
+			Credentials: credentials.NewStaticCredentials(id, secret, ""),
+		})*/
 		args1 = append(args1,
 			"-e",
 			fmt.Sprintf("S3User=%s", id),
 			"-e",
 			fmt.Sprintf("S3Secret=%s", secret),
 		)
+	} else {
+		/*awsSession = session.New()*/
+		args1 = append(args1,
+			"-e",
+			"S3User=''",
+			"-e",
+			"S3Secret=''",
+		)
 	}
-
+	/*s3s := s3.New(awsSession, &aws.Config{})
+	_, err = s3s.GetBucketLocation(&s3.GetBucketLocationInput{
+		Bucket: &bucket,
+	})
+	if err != nil {
+		m.slog.Warning(fmt.Sprintf("Get bucket location error %v", err))
+		return fmt.Errorf("Bucket request failed: %v", err)
+	}*/
 	out, err := util.ExecCommand(m.exec, "docker", append(args1, args2...), "")
 	if err != nil {
 		return fmt.Errorf("Failed mount s3fs out='%v' error='%v'", string(out), err)
