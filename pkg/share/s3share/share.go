@@ -2,10 +2,10 @@ package s3share
 
 import (
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
+	//"github.com/aws/aws-sdk-go/aws"
+	//"github.com/aws/aws-sdk-go/aws/credentials"
+	//"github.com/aws/aws-sdk-go/aws/session"
+	//"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/dreyk/s3share/pkg/util"
 	"log/syslog"
 	"strings"
