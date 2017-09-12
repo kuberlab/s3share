@@ -2,14 +2,17 @@ package s3share
 
 import (
 	"fmt"
-	//"github.com/aws/aws-sdk-go/aws"
-	//"github.com/aws/aws-sdk-go/aws/credentials"
-	//"github.com/aws/aws-sdk-go/aws/session"
-	//"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/dreyk/s3share/pkg/util"
 	"log/syslog"
 	"strings"
 	"syscall"
+	"os"
+	"encoding/base64"
+	"time"
 )
 
 type S3FSMount struct {
@@ -73,7 +76,7 @@ func (m *S3FSMount) Mount(path string) error {
 		"multireq_max=5",
 		"-f",
 	}
-	//var awsSession *session.Session
+	var awsSession *session.Session
 	if _, ok := m.conf["kubernetes.io/secret/aws_access_key_id"]; ok {
 		id, err := util.GetSecretString(m.conf, "aws_access_key_id")
 		if err != nil {
@@ -83,9 +86,9 @@ func (m *S3FSMount) Mount(path string) error {
 		if err != nil {
 			return err
 		}
-		/*awsSession = session.New(&aws.Config{
+		awsSession = session.New(&aws.Config{
 			Credentials: credentials.NewStaticCredentials(id, secret, ""),
-		})*/
+		})
 		args1 = append(args1,
 			"-e",
 			fmt.Sprintf("S3User=%s", id),
@@ -93,7 +96,7 @@ func (m *S3FSMount) Mount(path string) error {
 			fmt.Sprintf("S3Secret=%s", secret),
 		)
 	} else {
-		/*awsSession = session.New()*/
+		awsSession = session.New()
 		args1 = append(args1,
 			"-e",
 			"S3User=''",
@@ -101,14 +104,28 @@ func (m *S3FSMount) Mount(path string) error {
 			"S3Secret=''",
 		)
 	}
-	/*s3s := s3.New(awsSession, &aws.Config{})
+	s3s := s3.New(awsSession, &aws.Config{})
 	_, err = s3s.GetBucketLocation(&s3.GetBucketLocationInput{
 		Bucket: &bucket,
 	})
 	if err != nil {
 		m.slog.Warning(fmt.Sprintf("Get bucket location error %v", err))
 		return fmt.Errorf("Bucket request failed: %v", err)
-	}*/
+	}
+	fp := base64.StdEncoding.EncodeToString([]byte(path))
+	if d,err := os.Open("/tmp/"+fp);err!=nil{
+		fpw,err := os.Create("/tmp/"+fp)
+		if err!=nil{
+			return fmt.Errorf("Failed create test sync",err)
+		}
+		fpw.WriteString("ok")
+		fpw.Close()
+		m.slog.Info("Sleep start")
+		time.Sleep(1*time.Minute)
+		m.slog.Info("Sleep end")
+	} else{
+		d.Close()
+	}
 	out, err := util.ExecCommand(m.exec, "docker", append(args1, args2...), "")
 	if err != nil {
 		return fmt.Errorf("Failed mount s3fs out='%v' error='%v'", string(out), err)
