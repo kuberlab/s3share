@@ -66,7 +66,7 @@ type ResultStatus struct {
 }
 
 func mount(path string, conf string) {
-	slog.Info(fmt.Sprintf("Mount request '%s' data '%s'", path, conf))
+	slog.Info(fmt.Sprintf("Mount request '%s'", path))
 	s := getShare("mount", conf)
 	err := s.Mount(path)
 	if err != nil {

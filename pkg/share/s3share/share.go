@@ -10,8 +10,8 @@ import (
 	"log/syslog"
 	"strings"
 	"syscall"
-	"os"
-	"encoding/base64"
+	//"os"
+	//"encoding/base64"
 	"time"
 )
 
@@ -26,6 +26,10 @@ func NewS3FSMount(slog *syslog.Writer, conf map[string]interface{}) *S3FSMount {
 }
 
 func (m *S3FSMount) Mount(path string) error {
+	start := time.Now()
+	defer func(){
+		m.slog.Info(fmt.Sprintf("Time to mount: .%3f",time.Since(start).Seconds()))
+	}()
 	cid, err := m.mountDaemon(path)
 	if err != nil {
 		return nil
@@ -104,7 +108,7 @@ func (m *S3FSMount) Mount(path string) error {
 			"S3Secret=''",
 		)
 	}
-	s3s := s3.New(awsSession, &aws.Config{})
+	s3s := s3.New(awsSession, &aws.Config{Region:aws.String("eu-west-1")})
 	_, err = s3s.GetBucketLocation(&s3.GetBucketLocationInput{
 		Bucket: &bucket,
 	})
@@ -112,7 +116,7 @@ func (m *S3FSMount) Mount(path string) error {
 		m.slog.Warning(fmt.Sprintf("Get bucket location error %v", err))
 		return fmt.Errorf("Bucket request failed: %v", err)
 	}
-	fp := base64.StdEncoding.EncodeToString([]byte(path))
+	/*fp := base64.StdEncoding.EncodeToString([]byte(path))
 	if d,err := os.Open("/tmp/"+fp);err!=nil{
 		fpw,err := os.Create("/tmp/"+fp)
 		if err!=nil{
@@ -125,14 +129,13 @@ func (m *S3FSMount) Mount(path string) error {
 		m.slog.Info("Sleep end")
 	} else{
 		d.Close()
-	}
+	}*/
 	out, err := util.ExecCommand(m.exec, "docker", append(args1, args2...), "")
 	if err != nil {
 		return fmt.Errorf("Failed mount s3fs out='%v' error='%v'", string(out), err)
 	} else {
 		m.slog.Info(fmt.Sprintf("Start conntainer result %s", string(out)))
 	}
-
 	return nil
 }
 
@@ -174,6 +177,7 @@ func (m *S3FSMount) stopDaemon(path string, id string) error {
 	return nil
 }
 func (m *S3FSMount) mountDaemon(path string) (string, error) {
+	start := time.Now()
 	out, err := util.ExecCommand(m.exec, "docker", []string{"ps",
 		"--filter",
 		"label=flex.mount.path=" + path,
@@ -184,6 +188,7 @@ func (m *S3FSMount) mountDaemon(path string) (string, error) {
 		m.slog.Warning(fmt.Sprintf("Failed list docker containers: %v, %v", string(out), err))
 		return "", fmt.Errorf("Failed list docker containers: %v, %v", string(out), err)
 	}
+	m.slog.Info(fmt.Sprintf("Time to list containers: .%3f",time.Since(start).Seconds()))
 	if len(out) > 0 {
 		return strings.Trim(string(out), "\n"), nil
 	} else {
