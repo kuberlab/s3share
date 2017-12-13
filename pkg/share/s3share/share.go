@@ -70,7 +70,7 @@ func (m *S3FSMount) Mount(path string) error {
 	if ok {
 		region = aws.String(regionRaw.(string))
 	} else {
-		region = aws.String("eu-west-1")
+		region = aws.String("us-east-1")
 	}
 
 	args1 := []string{
@@ -136,7 +136,7 @@ func (m *S3FSMount) Mount(path string) error {
 			"S3Secret=''",
 		)
 	}
-	s3s := s3.New(awsSession, &aws.Config{Region: server})
+	s3s := s3.New(awsSession, &aws.Config{Region: region})
 	_, err = s3s.GetBucketLocation(&s3.GetBucketLocationInput{
 		Bucket: &bucket,
 	})
