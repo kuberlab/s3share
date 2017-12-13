@@ -27,8 +27,8 @@ func NewS3FSMount(slog *syslog.Writer, conf map[string]interface{}) *S3FSMount {
 
 func (m *S3FSMount) Mount(path string) error {
 	start := time.Now()
-	defer func(){
-		m.slog.Info(fmt.Sprintf("Time to mount: .%3f",time.Since(start).Seconds()))
+	defer func() {
+		m.slog.Info(fmt.Sprintf("Time to mount: .%3f", time.Since(start).Seconds()))
 	}()
 	cid, err := m.mountDaemon(path)
 	if err != nil {
@@ -59,6 +59,20 @@ func (m *S3FSMount) Mount(path string) error {
 		}
 	}
 	bucket := m.conf["bucket"].(string)
+
+	var server *string = nil
+	var region *string = nil
+	serverRaw, ok := m.conf["server"]
+	if ok {
+		server = aws.String(serverRaw.(string))
+	}
+	regionRaw, ok := m.conf["region"]
+	if ok {
+		region = aws.String(regionRaw.(string))
+	} else {
+		region = aws.String("eu-west-1")
+	}
+
 	args1 := []string{
 		"run",
 		"-d",
@@ -80,6 +94,15 @@ func (m *S3FSMount) Mount(path string) error {
 		"multireq_max=5",
 		"-f",
 	}
+
+	if server != nil {
+		args2 = append(
+			args2,
+			"-o",
+			fmt.Sprintf("url=%v", *server),
+		)
+	}
+
 	var awsSession *session.Session
 	if _, ok := m.conf["kubernetes.io/secret/aws_access_key_id"]; ok {
 		id, err := util.GetSecretString(m.conf, "aws_access_key_id")
@@ -91,6 +114,8 @@ func (m *S3FSMount) Mount(path string) error {
 			return err
 		}
 		awsSession = session.New(&aws.Config{
+			Endpoint:    server,
+			Region:      region,
 			Credentials: credentials.NewStaticCredentials(id, secret, ""),
 		})
 		args1 = append(args1,
@@ -100,7 +125,10 @@ func (m *S3FSMount) Mount(path string) error {
 			fmt.Sprintf("S3Secret=%s", secret),
 		)
 	} else {
-		awsSession = session.New()
+		awsSession = session.New(&aws.Config{
+			Endpoint: server,
+			Region:   region,
+		})
 		args1 = append(args1,
 			"-e",
 			"S3User=''",
@@ -108,7 +136,7 @@ func (m *S3FSMount) Mount(path string) error {
 			"S3Secret=''",
 		)
 	}
-	s3s := s3.New(awsSession, &aws.Config{Region:aws.String("eu-west-1")})
+	s3s := s3.New(awsSession, &aws.Config{Region: server})
 	_, err = s3s.GetBucketLocation(&s3.GetBucketLocationInput{
 		Bucket: &bucket,
 	})
@@ -188,7 +216,7 @@ func (m *S3FSMount) mountDaemon(path string) (string, error) {
 		m.slog.Warning(fmt.Sprintf("Failed list docker containers: %v, %v", string(out), err))
 		return "", fmt.Errorf("Failed list docker containers: %v, %v", string(out), err)
 	}
-	m.slog.Info(fmt.Sprintf("Time to list containers: .%3f",time.Since(start).Seconds()))
+	m.slog.Info(fmt.Sprintf("Time to list containers: .%3f", time.Since(start).Seconds()))
 	if len(out) > 0 {
 		return strings.Trim(string(out), "\n"), nil
 	} else {
