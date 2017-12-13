@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/dreyk/s3share/pkg/util"
+	"github.com/kuberlab/s3share/pkg/util"
 	"log/syslog"
 	"strings"
 	"syscall"

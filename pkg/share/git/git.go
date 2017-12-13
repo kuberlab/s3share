@@ -2,7 +2,7 @@ package git
 
 import (
 	"fmt"
-	"github.com/dreyk/s3share/pkg/util"
+	"github.com/kuberlab/s3share/pkg/util"
 	"log/syslog"
 	"syscall"
 )
@@ -19,7 +19,7 @@ func NewGitFSMount(slog *syslog.Writer, conf map[string]interface{}) *GitFSMount
 
 func (m *GitFSMount) Mount(path string) error {
 	if isMounted, err := util.IsMounted(path); err != nil {
-		return err
+		return fmt.Errorf("Failed test mount %v", err)
 	} else if isMounted {
 		return nil
 	}
@@ -42,9 +42,11 @@ func (m *GitFSMount) Mount(path string) error {
 
 func (m *GitFSMount) UnMount(path string) error {
 	if isMounted, err := util.IsMounted(path); err != nil {
-		return err
+		return fmt.Errorf("Failed test mount %v", err)
 	} else if !isMounted {
 		return nil
 	}
 	return syscall.Unmount(path, 0)
 }
+
+

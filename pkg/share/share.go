@@ -2,8 +2,8 @@ package share
 
 import (
 	"fmt"
-	"github.com/dreyk/s3share/pkg/share/git"
-	"github.com/dreyk/s3share/pkg/share/s3share"
+	"github.com/kuberlab/s3share/pkg/share/git"
+	"github.com/kuberlab/s3share/pkg/share/s3share"
 	"log/syslog"
 )
 
