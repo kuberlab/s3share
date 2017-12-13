@@ -3,8 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/dreyk/s3share/pkg/share"
-	"github.com/dreyk/s3share/pkg/util"
+	"github.com/kuberlab/s3share/pkg/share"
+	"github.com/kuberlab/s3share/pkg/util"
 	"log/syslog"
 	"os"
 	"strings"
