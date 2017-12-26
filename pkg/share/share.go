@@ -5,6 +5,7 @@ import (
 	"github.com/kuberlab/s3share/pkg/share/git"
 	"github.com/kuberlab/s3share/pkg/share/s3share"
 	"log/syslog"
+	"github.com/kuberlab/s3share/pkg/share/webdav"
 )
 
 type Share interface {
@@ -24,7 +25,7 @@ func NewShare(slog *syslog.Writer, c map[string]interface{}) (Share, error) {
 				case "s3":
 					return s3share.NewS3FSMount(slog, c), nil
 				case "webdav":
-					return s3share.NewS3FSMount(slog, c), nil
+					return webdav.NewWebDavMount(slog, c), nil
 				default:
 					return nil, fmt.Errorf("FS type '%s' is not supported", s)
 				}
