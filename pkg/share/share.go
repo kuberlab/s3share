@@ -23,6 +23,8 @@ func NewShare(slog *syslog.Writer, c map[string]interface{}) (Share, error) {
 					return git.NewGitFSMount(slog, c), nil
 				case "s3":
 					return s3share.NewS3FSMount(slog, c), nil
+				case "webdav":
+					return s3share.NewS3FSMount(slog, c), nil
 				default:
 					return nil, fmt.Errorf("FS type '%s' is not supported", s)
 				}

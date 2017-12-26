@@ -1,0 +1,8 @@
+package: github.com/kuberlab/s3share
+import:
+- package: github.com/aws/aws-sdk-go
+  subpackages:
+  - aws
+  - aws/credentials
+  - aws/session
+  - service/s3
