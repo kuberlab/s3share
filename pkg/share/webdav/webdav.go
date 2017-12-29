@@ -1,11 +1,12 @@
 package webdav
 
 import (
-	"log/syslog"
 	"fmt"
-	"syscall"
-	"github.com/kuberlab/s3share/pkg/util"
+	"log/syslog"
 	"strings"
+	"syscall"
+
+	"github.com/kuberlab/s3share/pkg/util"
 )
 
 type Mount struct {
@@ -31,7 +32,11 @@ func (m *Mount) Mount(path string) error {
 	urlRaw, ok := m.conf["serverURL"]
 	var url string
 	if !ok {
-		url = "http://pluk.kuberlab:8082/webdav"
+		ip, err := util.LocalIP()
+		if err != nil {
+			return err
+		}
+		url = fmt.Sprintf("http://%v:30082/webdav", ip)
 	} else {
 		url = urlRaw.(string)
 	}

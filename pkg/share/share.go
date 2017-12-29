@@ -2,9 +2,10 @@ package share
 
 import (
 	"fmt"
+	"log/syslog"
+
 	"github.com/kuberlab/s3share/pkg/share/git"
 	"github.com/kuberlab/s3share/pkg/share/s3share"
-	"log/syslog"
 	"github.com/kuberlab/s3share/pkg/share/webdav"
 )
 

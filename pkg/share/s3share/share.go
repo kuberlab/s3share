@@ -2,17 +2,18 @@ package s3share
 
 import (
 	"fmt"
+	"log/syslog"
+	"strings"
+	"syscall"
+	"time"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/kuberlab/s3share/pkg/util"
-	"log/syslog"
-	"strings"
-	"syscall"
 	//"os"
 	//"encoding/base64"
-	"time"
 )
 
 type S3FSMount struct {

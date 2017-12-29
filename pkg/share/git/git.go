@@ -2,9 +2,10 @@ package git
 
 import (
 	"fmt"
-	"github.com/kuberlab/s3share/pkg/util"
 	"log/syslog"
 	"syscall"
+
+	"github.com/kuberlab/s3share/pkg/util"
 )
 
 type GitFSMount struct {
@@ -48,5 +49,3 @@ func (m *GitFSMount) UnMount(path string) error {
 	}
 	return syscall.Unmount(path, 0)
 }
-
-
