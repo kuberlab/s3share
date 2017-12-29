@@ -43,7 +43,15 @@ func (m *Mount) Mount(path string) error {
 	url = strings.TrimSuffix(url, "/")
 	url = fmt.Sprintf("%v/%v/%v/%v", url, m.conf["workspace"], m.conf["dataset"], m.conf["version"])
 
-	out, err := util.ExecCommand(m.exec, "mount", []string{"-t", "davfs", url, path}, "")
+	// echo "pass" | mount -t davfs url path -o ro -o username='u'
+	out, err := util.ExecCommand(
+		m.exec,
+		"bash",
+		[]string{
+			"-c",
+			fmt.Sprintf(`echo "pass" | mount -t davfs "%v" "%v" -o ro -o username="u"`, url, path)},
+		"",
+	)
 	if err != nil {
 		return fmt.Errorf("Failed mount davfs out='%v' error='%v'", string(out), err)
 	}
