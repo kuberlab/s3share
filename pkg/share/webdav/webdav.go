@@ -46,7 +46,11 @@ func (m *Mount) Mount(path string) error {
 	var user = "internal"
 	var password = ""
 	if _, ok := m.conf["kubernetes.io/secret/token"]; ok {
-		password = m.conf["kubernetes.io/secret/token"].(string)
+		token, err := util.GetSecretString(m.conf, "token")
+		if err != nil {
+			return err
+		}
+		password = token
 	}
 
 	// echo "pass" | mount -t davfs url path -o ro -o username='u'
