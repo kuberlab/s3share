@@ -43,13 +43,19 @@ func (m *Mount) Mount(path string) error {
 	url = strings.TrimSuffix(url, "/")
 	url = fmt.Sprintf("%v/%v/%v/%v", url, m.conf["workspace"], m.conf["dataset"], m.conf["version"])
 
+	var user = "internal"
+	var password = ""
+	if _, ok := m.conf["kubernetes.io/secret/token"]; ok {
+		password = m.conf["kubernetes.io/secret/token"].(string)
+	}
+
 	// echo "pass" | mount -t davfs url path -o ro -o username='u'
 	out, err := util.ExecCommand(
 		m.exec,
 		"bash",
 		[]string{
 			"-c",
-			fmt.Sprintf(`echo "pass" | mount -t davfs "%v" "%v" -o ro -o username="u"`, url, path)},
+			fmt.Sprintf(`echo "%v" | mount -t davfs "%v" "%v" -o ro -o username="%v"`, password, url, path, user)},
 		"",
 	)
 	if err != nil {
