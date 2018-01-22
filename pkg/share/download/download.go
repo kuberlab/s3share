@@ -30,13 +30,15 @@ func NewDownloadMount(slog *syslog.Writer, conf map[string]interface{}) *Mount {
 func (m *Mount) EnsureDownloaderContainer() error {
 	cmd := m.exec.Command(
 		"docker",
-		"inpect",
+		"inspect",
 		"pluk-downloader",
 	)
 	_, err := cmd.CombinedOutput()
 	if err == nil {
 		return nil
 	}
+
+	os.Mkdir("/pluk-downloader", os.ModePerm)
 
 	// Start container and wait some secs
 	// docker run -d -e PLUK_URL=https://dev.kuberlab.io/pluk/v1
@@ -47,10 +49,15 @@ func (m *Mount) EnsureDownloaderContainer() error {
 		"run",
 		"-d",
 		"-e",
-		"PLUK_URL=http://127.0.0.1:30802/pluk/v1",
+		//"PLUK_URL=http://127.0.0.1:30802/pluk/v1",
+		"PLUK_URL=https://dev.kuberlab.io/pluk/v1",
+		"-e",
+		"DEBUG=true",
 		"-v",
 		"/pluk-downloader:/pluk-downloader",
 		"--network=host",
+		"--name",
+		"pluk-downloader",
 		"kuberlab/pluk-downloader:latest",
 	)
 	_, err = cmd.CombinedOutput()
@@ -68,7 +75,7 @@ func (m *Mount) IsMounted(mountpoint string) (bool, error) {
 		}
 		return false, err
 	}
-	out, err := util.ExecCommand(m.exec, "bash", []string{"-c", fmt.Sprintf("mount | grep %v", mountpoint)}, "")
+	out, err := util.ExecCommand(m.exec, "bash", []string{"-c", fmt.Sprintf("mount | grep %v | xargs echo", mountpoint)}, "")
 	if err != nil {
 		return false, err
 	}
