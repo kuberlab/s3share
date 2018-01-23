@@ -28,12 +28,26 @@ func NewDownloadMount(slog *syslog.Writer, conf map[string]interface{}) *Mount {
 }
 
 func (m *Mount) EnsureDownloaderContainer() error {
+	var err error
+	var lockFile *os.File
+	for {
+		lockFile, err = os.OpenFile("/tmp/pluk.lock", os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
+		if os.IsExist(err) {
+			time.Sleep(time.Second * 2)
+		}
+		if os.IsNotExist(err) || err == nil {
+			break
+		}
+	}
+	defer os.Remove("/tmp/pluk.lock")
+	defer lockFile.Close()
+
 	cmd := m.exec.Command(
 		"docker",
 		"inspect",
 		"pluk-downloader",
 	)
-	_, err := cmd.CombinedOutput()
+	_, err = cmd.CombinedOutput()
 	if err == nil {
 		return nil
 	}
@@ -49,8 +63,8 @@ func (m *Mount) EnsureDownloaderContainer() error {
 		"run",
 		"-d",
 		"-e",
-		"PLUK_URL=http://127.0.0.1:30802/pluk/v1",
-		//"PLUK_URL=https://dev.kuberlab.io/pluk/v1",
+		//"PLUK_URL=http://127.0.0.1:30802/pluk/v1",
+		"PLUK_URL=https://dev.kuberlab.io/pluk/v1",
 		"-e",
 		"DEBUG=true",
 		"-v",
@@ -58,12 +72,15 @@ func (m *Mount) EnsureDownloaderContainer() error {
 		"--network=host",
 		"--name",
 		"pluk-downloader",
+		"--restart",
+		"always",
 		"kuberlab/pluk-downloader:latest",
 	)
 	_, err = cmd.CombinedOutput()
 	if err == nil {
 		time.Sleep(time.Second * 2)
 	}
+
 	return err
 }
 
