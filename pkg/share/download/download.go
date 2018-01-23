@@ -52,7 +52,7 @@ func (m *Mount) EnsureDownloaderContainer() error {
 		return nil
 	}
 
-	os.Mkdir("/pluk-downloader", os.ModePerm)
+	//os.Mkdir("/pluk-downloader", os.ModePerm)
 
 	// Start container and wait some secs
 	// docker run -d -e PLUK_URL=https://dev.kuberlab.io/pluk/v1
@@ -63,12 +63,14 @@ func (m *Mount) EnsureDownloaderContainer() error {
 		"run",
 		"-d",
 		"-e",
-		//"PLUK_URL=http://127.0.0.1:30802/pluk/v1",
-		"PLUK_URL=https://dev.kuberlab.io/pluk/v1",
+		"PLUK_URL=http://127.0.0.1:30802/pluk/v1",
+		//"PLUK_URL=https://dev.kuberlab.io/pluk/v1",
 		"-e",
 		"DEBUG=true",
+		"-e",
+		"DOWNLOAD_DIR=/pluk-tmp",
 		"-v",
-		"/pluk-downloader:/pluk-downloader",
+		"/pluk-tmp:/pluk-tmp",
 		"--network=host",
 		"--name",
 		"pluk-downloader",
@@ -104,7 +106,7 @@ func (m *Mount) IsMounted(mountpoint string) (bool, error) {
 }
 
 func (m *Mount) Mount(path string) error {
-	if isMounted, err := m.IsMounted(path); err != nil {
+	if isMounted, err := util.IsMounted(path); err != nil {
 		return fmt.Errorf("Failed test mount %v", err)
 	} else if isMounted {
 		return nil
@@ -166,7 +168,7 @@ func (m *Mount) Mount(path string) error {
 		return fmt.Errorf("Failed mount tmpfs out='%v' error='%v'", string(out), err)
 	}
 
-	if isMounted, err := m.IsMounted(path); err != nil {
+	if isMounted, err := util.IsMounted(path); err != nil {
 		m.slog.Warning("Can't get mount status: " + err.Error())
 	} else {
 		m.slog.Info(fmt.Sprintf("Mount result is %v", isMounted))
@@ -175,7 +177,7 @@ func (m *Mount) Mount(path string) error {
 }
 
 func (m *Mount) UnMount(path string) error {
-	if isMounted, err := m.IsMounted(path); err != nil {
+	if isMounted, err := util.IsMounted(path); err != nil {
 		return fmt.Errorf("Failed test mount %v", err)
 	} else if !isMounted {
 		return nil
