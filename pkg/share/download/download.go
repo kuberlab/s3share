@@ -55,9 +55,12 @@ func (m *Mount) EnsureDownloaderContainer() error {
 	//os.Mkdir("/pluk-downloader", os.ModePerm)
 
 	// Start container and wait some secs
-	// docker run -d -e PLUK_URL=https://dev.kuberlab.io/pluk/v1
-	// -v /pluk-downloader:/pluk-downloader --name pluk-downloader
-	// --network=host kuberlab/pluk-downloader:latest
+	/*
+		docker run -d -e PLUK_URL=http://127.0.0.1:30802/pluk/v1 \
+		-e DOWNLOAD_DIR=/pluk-tmp -v /pluk-tmp:/pluk-tmp --mount \
+		type=bind,source=/var/lib/kubelet/pods,target=/var/lib/kubelet/pods,readonly,bind-propagation=shared \
+		--name pluk-downloader --network=host kuberlab/pluk-downloader:latest
+	*/
 	cmd = m.exec.Command(
 		"docker",
 		"run",
@@ -71,6 +74,8 @@ func (m *Mount) EnsureDownloaderContainer() error {
 		"DOWNLOAD_DIR=/pluk-tmp",
 		"-v",
 		"/pluk-tmp:/pluk-tmp",
+		"--mount",
+		"type=bind,source=/var/lib/kubelet/pods,target=/var/lib/kubelet/pods,readonly,bind-propagation=shared",
 		"--network=host",
 		"--name",
 		"pluk-downloader",
