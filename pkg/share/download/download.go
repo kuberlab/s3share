@@ -59,7 +59,7 @@ func (m *Mount) EnsureDownloaderContainer() error {
 		docker run -d -e PLUK_URL=http://127.0.0.1:30802/pluk/v1 \
 		-e DOWNLOAD_DIR=/pluk-tmp -v /pluk-tmp:/pluk-tmp --mount \
 		type=bind,source=/var/lib/kubelet/pods,target=/var/lib/kubelet/pods,readonly,bind-propagation=shared \
-		--name pluk-downloader --network=host kuberlab/pluk-downloader:latest
+		--name pluk-downloader --network=host --restart always kuberlab/pluk-downloader:latest
 	*/
 	cmd = m.exec.Command(
 		"docker",
