@@ -80,8 +80,8 @@ func (m *S3FSMount) Mount(path string) error {
 		"--privileged",
 		"-l",
 		"flex.mount.path=" + path,
-		"-v",
-		path + ":/mnt/mountpoint:shared",
+		"--mount",
+		"type=bind,source=" + path + ",target=/mnt/mountpoint,bind-propagation=shared",
 		"--cap-add",
 		"SYS_ADMIN",
 	}
