@@ -52,7 +52,7 @@ func TryStopMountDaemon(path string) error {
 }
 
 func MountDaemon(path string, exec Interface) (string, error) {
-	out, err := ExecCommand(exec, "docker", []string{"ps",
+	out, err := ExecCommand(exec, "docker", []string{"ps", "-a",
 		"--filter",
 		"label=flex.mount.path=" + path,
 		"--format",
