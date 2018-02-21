@@ -3,12 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kuberlab/s3share/pkg/share"
-	"github.com/kuberlab/s3share/pkg/util"
 	"log/syslog"
 	"os"
 	"strings"
 	"syscall"
+
+	"github.com/kuberlab/s3share/pkg/share"
+	"github.com/kuberlab/s3share/pkg/util"
 )
 
 var slog *syslog.Writer
@@ -82,6 +83,7 @@ func mount(path string, conf string) {
 }
 func unmount(path string) {
 	slog.Info(fmt.Sprintf("Unmount request '%s'", path))
+	util.TryStopMountDaemon(path)
 	err := syscall.Unmount(path, 0)
 	if err != nil {
 		log("unmount", ResultStatus{

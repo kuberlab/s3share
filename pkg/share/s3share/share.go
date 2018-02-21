@@ -3,7 +3,6 @@ package s3share
 import (
 	"fmt"
 	"log/syslog"
-	"strings"
 	"syscall"
 	"time"
 
@@ -12,8 +11,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/kuberlab/s3share/pkg/util"
-	//"os"
-	//"encoding/base64"
 )
 
 type S3FSMount struct {
@@ -31,7 +28,7 @@ func (m *S3FSMount) Mount(path string) error {
 	defer func() {
 		m.slog.Info(fmt.Sprintf("Time to mount: .%3f", time.Since(start).Seconds()))
 	}()
-	cid, err := m.mountDaemon(path)
+	cid, err := util.MountDaemon(path, m.exec)
 	if err != nil {
 		return nil
 	}
@@ -42,7 +39,7 @@ func (m *S3FSMount) Mount(path string) error {
 			return nil
 		} else {
 			m.slog.Warning(fmt.Sprintf("Mount point '%s' doesn't exist but container '%s' is running", path, cid))
-			if err := m.stopDaemon(path, cid); err != nil {
+			if err := util.StopDaemon(cid, m.exec); err != nil {
 				return err
 			}
 
@@ -169,58 +166,6 @@ func (m *S3FSMount) Mount(path string) error {
 }
 
 func (m *S3FSMount) UnMount(path string) error {
-	cid, err := m.mountDaemon(path)
-	if err != nil {
-		return err
-	}
-	if cid != "" {
-		if err := m.stopDaemon(path, cid); err != nil {
-			return err
-		}
-	}
-	if isMounted, err := util.IsMounted(path); err != nil {
-		return err
-	} else if !isMounted {
-		return nil
-	}
-	return syscall.Unmount(path, 0)
-}
-
-func (m *S3FSMount) stopDaemon(path string, id string) error {
-	m.slog.Info("Stoping container " + id)
-	out, err := util.ExecCommand(m.exec, "docker", []string{"stop",
-		id,
-	}, "")
-	if err != nil {
-		m.slog.Warning(fmt.Sprintf("Failed stop docker container: %v, %v %v", id, out, err))
-		return fmt.Errorf("Failed stop docker container: %v,%v %v", id, out, err)
-	}
-	m.slog.Info("Terminating container " + id)
-	out, err = util.ExecCommand(m.exec, "docker", []string{"rm",
-		id,
-	}, "")
-	if err != nil {
-		m.slog.Warning(fmt.Sprintf("Failed remove docker container: %v, %v %v", id, out, err))
-		return fmt.Errorf("Failed remove docker container: %v, %v %v", id, out, err)
-	}
+	// Unused ??
 	return nil
-}
-func (m *S3FSMount) mountDaemon(path string) (string, error) {
-	start := time.Now()
-	out, err := util.ExecCommand(m.exec, "docker", []string{"ps",
-		"--filter",
-		"label=flex.mount.path=" + path,
-		"--format",
-		`"{{.ID}}"`,
-	}, "")
-	if err != nil {
-		m.slog.Warning(fmt.Sprintf("Failed list docker containers: %v, %v", string(out), err))
-		return "", fmt.Errorf("Failed list docker containers: %v, %v", string(out), err)
-	}
-	m.slog.Info(fmt.Sprintf("Time to list containers: .%3f", time.Since(start).Seconds()))
-	if len(out) > 0 {
-		return strings.Trim(string(out), "\n"), nil
-	} else {
-		return "", nil
-	}
 }

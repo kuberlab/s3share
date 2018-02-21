@@ -42,6 +42,44 @@ func ExecCommand(exec Interface, command string, args []string, dir string) ([]b
 	return cmd.CombinedOutput()
 }
 
+func TryStopMountDaemon(path string) error {
+	exec := NewExec()
+	cid, err := MountDaemon(path, exec)
+	if err != nil {
+		return err
+	}
+	return StopDaemon(cid, exec)
+}
+
+func MountDaemon(path string, exec Interface) (string, error) {
+	out, err := ExecCommand(exec, "docker", []string{"ps",
+		"--filter",
+		"label=flex.mount.path=" + path,
+		"--format",
+		`{{ .ID }}`,
+	}, "")
+	if err != nil {
+		return "", fmt.Errorf("Failed list docker containers: %v, %v", string(out), err)
+	}
+	if len(out) > 0 {
+		return strings.Trim(string(out), "\n"), nil
+	} else {
+		return "", nil
+	}
+}
+
+func StopDaemon(id string, exec Interface) error {
+	out, err := ExecCommand(exec, "docker", []string{"stop", id}, "")
+	if err != nil {
+		return fmt.Errorf("Failed stop docker container: %v,%v %v", id, out, err)
+	}
+	out, err = ExecCommand(exec, "docker", []string{"rm", id}, "")
+	if err != nil {
+		return fmt.Errorf("Failed remove docker container: %v, %v %v", id, out, err)
+	}
+	return nil
+}
+
 func ParseFindMntOut(out string) (string, string, error) {
 	//root/test1 /dev/mapper/ASRock--vg-home[/tmp/test2] ext4   rw,relatime,errors=remount-ro,data=ordered
 	p1 := strings.Split(out, "/n")
