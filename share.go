@@ -84,6 +84,16 @@ func mount(path string, conf string) {
 func unmount(path string) {
 	slog.Info(fmt.Sprintf("Unmount request '%s'", path))
 	util.TryStopMountDaemon(path)
+
+	// Check if already unmounted
+	mounted, _ := util.IsMounted(path)
+	if !mounted {
+		log("unmount", ResultStatus{
+			Status: util.Success,
+		})
+		return
+	}
+
 	err := syscall.Unmount(path, 0)
 	if err != nil {
 		log("unmount", ResultStatus{
