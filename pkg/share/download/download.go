@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/kuberlab/s3share/pkg/util"
+	"os/exec"
 )
 
 type Mount struct {
@@ -117,6 +118,20 @@ func (m *Mount) Mount(path string) error {
 		return nil
 	}
 
+	cmd := exec.Command(
+		"sh",
+		"-c",
+		fmt.Sprintf("mount | grep %v", path),
+	)
+	out, err := cmd.Output()
+	if err != nil {
+		return err
+	}
+	if strings.Contains(string(out), path) {
+		// Already mounted
+		return nil
+	}
+
 	if err := m.EnsureDownloaderContainer(); err != nil {
 		return err
 	}
@@ -157,7 +172,7 @@ func (m *Mount) Mount(path string) error {
 
 	datasetPath := string(data)
 	// mount --rbind <dataset-path> <mount-path> -o ro
-	out, err := util.ExecCommand(
+	out, err = util.ExecCommand(
 		m.exec,
 		"mount",
 		[]string{
