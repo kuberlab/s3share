@@ -123,10 +123,7 @@ func (m *Mount) Mount(path string) error {
 		"-c",
 		fmt.Sprintf("mount | grep %v", path),
 	)
-	out, err := cmd.Output()
-	if err != nil {
-		return err
-	}
+	out, _ := cmd.CombinedOutput()
 	if strings.Contains(string(out), path) {
 		// Already mounted
 		return nil
