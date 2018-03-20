@@ -115,6 +115,28 @@ func (m *PlukeFSMount) Mount(path string) error {
 	} else {
 		m.slog.Info(fmt.Sprintf("Start conntainer result %s", string(out)))
 	}
+
+	// Wait mount success.
+	timeout := time.NewTimer(time.Minute * 3)
+	ticker := time.NewTicker(time.Second * 2)
+	mounted := false
+	for {
+		select {
+		case <-ticker.C:
+			isMounted, _ := util.IsMounted(path)
+			if isMounted {
+				mounted = true
+				break
+			}
+		case <-timeout.C:
+			m.slog.Err("Failed mount FS: timeout.")
+			util.StopDaemon(cid, m.exec)
+		}
+		if mounted {
+			break
+		}
+	}
+
 	return nil
 }
 
