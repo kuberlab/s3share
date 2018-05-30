@@ -16,6 +16,11 @@ var slog *syslog.Writer
 
 func main() {
 	args := os.Args
+	var err error
+	slog, err = syslog.New(syslog.LOG_WARNING|syslog.LOG_DAEMON, "kuberlab-share")
+	if err != nil {
+		panic(err)
+	}
 	if len(args) < 2 {
 		log("unknown", ResultStatus{
 			Status:  util.Failure,
@@ -23,11 +28,7 @@ func main() {
 		})
 		os.Exit(-1)
 	}
-	var err error
-	slog, err = syslog.New(syslog.LOG_WARNING|syslog.LOG_DAEMON, "kuberlab-share")
-	if err != nil {
-		panic(err)
-	}
+
 	switch args[1] {
 	case "mount":
 		if len(args) < 4 {

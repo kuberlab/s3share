@@ -56,7 +56,13 @@ func (m *S3FSMount) Mount(path string) error {
 			}
 		}
 	}
-	bucket := m.conf["bucket"].(string)
+	bucketRaw, ok := m.conf["bucket"]
+	var bucket string
+	if ok {
+		bucket = bucketRaw.(string)
+	} else {
+		return fmt.Errorf("'bucket' required in config")
+	}
 
 	var server *string = nil
 	var region *string = nil
@@ -123,15 +129,25 @@ func (m *S3FSMount) Mount(path string) error {
 			fmt.Sprintf("S3Secret=%s", secret),
 		)
 	} else {
-		awsSession = session.New(&aws.Config{
+		awsSession, err = session.NewSession(&aws.Config{
 			Endpoint: server,
 			Region:   region,
 		})
-		args1 = append(args1,
+		if err != nil {
+			return err
+		}
+		args1 = append(
+			args1,
 			"-e",
 			"S3User=''",
 			"-e",
 			"S3Secret=''",
+		)
+		// Try to mount as public bucket.
+		args2 = append(
+			args2,
+			"-o",
+			"public_bucket=1",
 		)
 	}
 	s3s := s3.New(awsSession, &aws.Config{Region: region})
