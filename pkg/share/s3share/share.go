@@ -117,11 +117,14 @@ func (m *S3FSMount) Mount(path string) error {
 		if err != nil {
 			return err
 		}
-		awsSession = session.New(&aws.Config{
+		awsSession, err = session.NewSession(&aws.Config{
 			Endpoint:    server,
 			Region:      region,
 			Credentials: credentials.NewStaticCredentials(id, secret, ""),
 		})
+		if err != nil {
+			return err
+		}
 		args1 = append(args1,
 			"-e",
 			fmt.Sprintf("S3User=%s", id),
@@ -130,8 +133,10 @@ func (m *S3FSMount) Mount(path string) error {
 		)
 	} else {
 		awsSession, err = session.NewSession(&aws.Config{
-			Endpoint: server,
-			Region:   region,
+			Endpoint:                      server,
+			Region:                        region,
+			Credentials:                   credentials.AnonymousCredentials,
+			CredentialsChainVerboseErrors: aws.Bool(true),
 		})
 		if err != nil {
 			return err
@@ -150,8 +155,8 @@ func (m *S3FSMount) Mount(path string) error {
 			"public_bucket=1",
 		)
 	}
-	s3s := s3.New(awsSession, &aws.Config{Region: region})
-	_, err = s3s.GetBucketLocation(&s3.GetBucketLocationInput{
+	s3s := s3.New(awsSession)
+	_, err = s3s.ListObjects(&s3.ListObjectsInput{
 		Bucket: &bucket,
 	})
 	if err != nil {
