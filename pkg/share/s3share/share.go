@@ -76,6 +76,9 @@ func (m *S3FSMount) Mount(path string) error {
 	} else {
 		region = aws.String("us-east-1")
 	}
+	if *region == "" {
+		region = aws.String("us-east-1")
+	}
 
 	args1 := []string{
 		"run",
