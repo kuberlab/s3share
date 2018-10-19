@@ -91,6 +91,12 @@ func (m *PlukeFSMount) Mount(path string) error {
 		"--cap-add",
 		"SYS_ADMIN",
 	}
+
+	dsType, ok := m.conf["type"]
+	if !ok || dsType == "" {
+		dsType = "dataset"
+	}
+
 	args2 := []string{
 		"kuberlab/plukefs:latest",
 		"plukefs",
@@ -101,6 +107,8 @@ func (m *PlukeFSMount) Mount(path string) error {
 		fmt.Sprintf("dataset=%v", m.conf["dataset"]),
 		"-o",
 		fmt.Sprintf("version=%v", m.conf["version"]),
+		"-o",
+		fmt.Sprintf("type=%v", dsType),
 		"-o",
 		fmt.Sprintf("server=%v", server),
 		"-o",
