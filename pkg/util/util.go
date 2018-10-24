@@ -68,6 +68,32 @@ func MountDaemon(path string, exec Interface) (string, error) {
 	}
 }
 
+func CheckDaemon(id string, exec Interface) error {
+	// docker inspect c4e1f5a1af33 --format '{{ .State.Status }} {{ .State.ExitCode}}'
+	args := []string{"inspect", id, "--format", "{{ .State.Status }}"}
+	out, err := ExecCommand(exec, "docker", args, "")
+	if err != nil {
+		return err
+	}
+	outS := strings.Trim(string(out), "\n")
+
+	if outS == "exited" {
+		return errors.New("Daemon is exited")
+	} else {
+		return nil
+	}
+}
+
+func DaemonLogs(id string, exec Interface) (string, error) {
+	// docker inspect c4e1f5a1af33 --format '{{ .State.Status }} {{ .State.ExitCode}}'
+	args := []string{"logs", id}
+	out, err := ExecCommand(exec, "docker", args, "")
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
+}
+
 func StopDaemon(id string, exec Interface) error {
 	out, err := ExecCommand(exec, "docker", []string{"rm", "--force", id}, "")
 	if err != nil {

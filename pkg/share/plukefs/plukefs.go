@@ -6,7 +6,9 @@ import (
 	"syscall"
 	"time"
 
+	"errors"
 	"github.com/kuberlab/s3share/pkg/util"
+	"strings"
 )
 
 type PlukeFSMount struct {
@@ -102,9 +104,11 @@ func (m *PlukeFSMount) Mount(path string) error {
 		"plukefs",
 		"--debug",
 		"-o",
-		fmt.Sprintf("workspace=%v", m.conf["workspace"]),
+		fmt.Sprintf("secret_workspace=%v", m.conf["secret_workspace"]),
 		"-o",
-		fmt.Sprintf("dataset=%v", m.conf["dataset"]),
+		fmt.Sprintf("object_workspace=%v", m.conf["object_workspace"]),
+		"-o",
+		fmt.Sprintf("name=%v", m.conf["name"]),
 		"-o",
 		fmt.Sprintf("version=%v", m.conf["version"]),
 		"-o",
@@ -124,6 +128,8 @@ func (m *PlukeFSMount) Mount(path string) error {
 		m.slog.Info(fmt.Sprintf("Start conntainer result %s", string(out)))
 	}
 
+	cid = strings.Trim(string(out), "\n")
+
 	// Wait mount success.
 	timeout := time.NewTimer(time.Minute * 3)
 	ticker := time.NewTicker(time.Second * 2)
@@ -135,6 +141,14 @@ func (m *PlukeFSMount) Mount(path string) error {
 			if isMounted {
 				mounted = true
 				break
+			}
+			if err = util.CheckDaemon(cid, m.exec); err != nil {
+				logs, err := util.DaemonLogs(cid, m.exec)
+				if err == nil {
+					m.slog.Err(logs)
+					return errors.New(logs)
+				}
+				return errors.New("Failed mount: mount daemon has been failed")
 			}
 		case <-timeout.C:
 			m.slog.Err("Failed mount FS: timeout.")
