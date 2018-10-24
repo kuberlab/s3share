@@ -69,11 +69,7 @@ func MountDaemon(path string, exec Interface) (string, error) {
 }
 
 func StopDaemon(id string, exec Interface) error {
-	out, err := ExecCommand(exec, "docker", []string{"stop", id}, "")
-	if err != nil {
-		return fmt.Errorf("Failed stop docker container: %v,%v %v", id, out, err)
-	}
-	out, err = ExecCommand(exec, "docker", []string{"rm", id}, "")
+	out, err := ExecCommand(exec, "docker", []string{"rm", "--force", id}, "")
 	if err != nil {
 		return fmt.Errorf("Failed remove docker container: %v, %v %v", id, out, err)
 	}

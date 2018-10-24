@@ -139,6 +139,7 @@ func (m *PlukeFSMount) Mount(path string) error {
 		case <-timeout.C:
 			m.slog.Err("Failed mount FS: timeout.")
 			util.StopDaemon(cid, m.exec)
+			return fmt.Errorf("Failed mount: timed out")
 		}
 		if mounted {
 			break
