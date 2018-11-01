@@ -49,7 +49,7 @@ func (m *PlukeFSMount) Mount(path string) error {
 			m.slog.Warning(fmt.Sprintf("Mount point '%s' exists but container is not running", path))
 			err := syscall.Unmount(path, 0)
 			if err != nil {
-				m.slog.Warning(fmt.Sprintf("Failed unmount stailed mount '%s': %v", path, err))
+				m.slog.Warning(fmt.Sprintf("Failed unmount stalled mount '%s': %v", path, err))
 				return err
 			}
 		}
@@ -99,10 +99,23 @@ func (m *PlukeFSMount) Mount(path string) error {
 		dsType = "dataset"
 	}
 
+	// Check for required params
+	_, okSW := m.conf["secret_workspace"]
+	_, okOW := m.conf["object_workspace"]
+	_, okN := m.conf["name"]
+	_, okV := m.conf["version"]
+
+	ok = okSW && okOW && okN && okV
+	if !ok {
+		return fmt.Errorf(
+			"secret_workspace, object_workspace, name, version are required.",
+		)
+	}
+
 	args2 := []string{
 		"kuberlab/plukefs:latest",
 		"plukefs",
-		"--debug",
+		//"--debug",
 		"-o",
 		fmt.Sprintf("secret_workspace=%v", m.conf["secret_workspace"]),
 		"-o",
@@ -131,7 +144,7 @@ func (m *PlukeFSMount) Mount(path string) error {
 	cid = strings.Trim(string(out), "\n")
 
 	// Wait mount success.
-	timeout := time.NewTimer(time.Minute * 3)
+	timeout := time.NewTimer(time.Minute * 2)
 	ticker := time.NewTicker(time.Second * 2)
 	mounted := false
 	for {
@@ -144,6 +157,8 @@ func (m *PlukeFSMount) Mount(path string) error {
 			}
 			if err = util.CheckDaemon(cid, m.exec); err != nil {
 				logs, err := util.DaemonLogs(cid, m.exec)
+				util.StopDaemon(cid, m.exec)
+				util.ExecCommand(m.exec, "umount", []string{"-f", path}, "")
 				if err == nil {
 					m.slog.Err(logs)
 					return errors.New(logs)
@@ -153,6 +168,7 @@ func (m *PlukeFSMount) Mount(path string) error {
 		case <-timeout.C:
 			m.slog.Err("Failed mount FS: timeout.")
 			util.StopDaemon(cid, m.exec)
+			util.ExecCommand(m.exec, "umount", []string{"-f", path}, "")
 			return fmt.Errorf("Failed mount: timed out")
 		}
 		if mounted {
