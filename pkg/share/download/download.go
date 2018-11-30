@@ -133,7 +133,29 @@ func (m *Mount) Mount(path string) error {
 		return err
 	}
 
-	url := fmt.Sprintf("http://127.0.0.1:8084/v1/download/%v/%v/%v", m.conf["workspace"], m.conf["dataset"], m.conf["version"])
+	var objectWorkspace string
+	var secretWorkspace string
+	if obj, ok := m.conf["object_workspace"]; ok {
+		objectWorkspace = obj.(string)
+		secretRaw, ok := m.conf["secret_workspace"]
+		if !ok {
+			return fmt.Errorf("secret_workspace required")
+		}
+		secretWorkspace = secretRaw.(string)
+	} else {
+		// Fallback on old version: just workspace
+		ws, ok := m.conf["workspace"]
+		if !ok {
+			return fmt.Errorf("workspace or (object_workspace and secret_workspace) required")
+		}
+		objectWorkspace = ws.(string)
+		secretWorkspace = ws.(string)
+	}
+
+	url := fmt.Sprintf(
+		"http://127.0.0.1:8084/v1/download/%v/%v/%v",
+		objectWorkspace, m.conf["dataset"], m.conf["version"],
+	)
 
 	var password = ""
 	if _, ok := m.conf["kubernetes.io/secret/token"]; ok {
@@ -143,14 +165,14 @@ func (m *Mount) Mount(path string) error {
 		}
 		password = token
 	}
-	// http://127.0.0.1:8084/v1/download/{workspace}/{dataset}/{version}
-	// -H "X-Workspace-Name: kuberlab-demo" -H "X-Workspace-Secret: $secret"
+	// http://127.0.0.1:8084/v1/download/{object_workspace}/{dataset}/{version}
+	// -H "X-Workspace-Name: <secret_workspace>" -H "X-Workspace-Secret: $secret"
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return err
 	}
-	req.Header.Set("X-Workspace-Name", fmt.Sprintf("%v", m.conf["workspace"]))
+	req.Header.Set("X-Workspace-Name", fmt.Sprintf("%v", secretWorkspace))
 	req.Header.Set("X-Workspace-Secret", password)
 
 	resp, err := http.DefaultClient.Do(req)
