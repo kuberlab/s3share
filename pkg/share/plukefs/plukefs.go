@@ -75,11 +75,12 @@ func (m *PlukeFSMount) Mount(path string) error {
 		}
 		secret = token
 	}
-	/*  docker run -it --rm --mount \
-	type=bind,source=<path>,target=/mnt/mountpoint,bind-propagation=shared \
-	--privileged kuberlab/plukefs:latest \
-	plukefs --debug -o workspace=kuberlab-demo -o dataset=styles \
-	-o version=1.0.0 -o server=http://192.168.0.9:8082 -o mountPoint=/mnt/mountpoint
+	/*
+		docker run -it --rm --mount \
+		type=bind,source=$(pwd)/mount,target=/mnt/mountpoint,bind-propagation=shared \
+		--privileged kuberlab/plukefs:latest \
+		plukefs --debug -o workspace=kuberlab-demo -o name=styles \
+		-o version=1.0.0 -o server=http://192.168.0.9:8082 -o mountPoint=/mnt/mountpoint
 	*/
 
 	args1 := []string{
