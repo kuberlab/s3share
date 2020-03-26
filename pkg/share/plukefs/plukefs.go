@@ -3,6 +3,7 @@ package plukefs
 import (
 	"fmt"
 	"log/syslog"
+	"os/exec"
 	"syscall"
 	"time"
 
@@ -22,6 +23,11 @@ func NewPlukeFSMount(slog *syslog.Writer, conf map[string]interface{}) *PlukeFSM
 }
 
 func (m *PlukeFSMount) Mount(path string) error {
+	// Try to clean up Failed/Exited old containers
+	// docker ps -a -f ancestor=kuberlab/plukefs -f status=exited --format '{{ .ID }}' -n 3 | xargs -n 1 docker rm
+	cleanCmd := exec.Command("/bin/bash", "-c", "docker ps -a -f ancestor=kuberlab/plukefs -f status=exited --format '{{ .ID }}' -n 3 | xargs -n 1 docker rm")
+	_ = cleanCmd.Run()
+
 	start := time.Now()
 	defer func() {
 		m.slog.Info(fmt.Sprintf("Time to mount: .%3f", time.Since(start).Seconds()))
@@ -146,7 +152,7 @@ func (m *PlukeFSMount) Mount(path string) error {
 
 	// Wait mount success.
 	timeout := time.NewTimer(time.Minute * 2)
-	ticker := time.NewTicker(time.Second * 2)
+	ticker := time.NewTicker(time.Millisecond * 500)
 	mounted := false
 	for {
 		select {
